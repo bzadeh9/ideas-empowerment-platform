@@ -1,4 +1,5 @@
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
+import { BrandingProvider } from '@/lib/branding-context'
 import { ChatProvider } from '@/lib/chat-context'
 import { CommandLogsStream } from '@/components/commands-logs/commands-logs-stream'
 import { ErrorMonitor } from '@/components/error-monitor/error-monitor'
@@ -30,13 +31,15 @@ export default function RootLayout({
           disableTransitionOnChange
           enableSystem
         >
-          <Suspense fallback={null}>
-            <NuqsAdapter>
-              <ChatProvider>
-                <ErrorMonitor>{children}</ErrorMonitor>
-              </ChatProvider>
-            </NuqsAdapter>
-          </Suspense>
+          <BrandingProvider>
+            <Suspense fallback={null}>
+              <NuqsAdapter>
+                <ChatProvider>
+                  <ErrorMonitor>{children}</ErrorMonitor>
+                </ChatProvider>
+              </NuqsAdapter>
+            </Suspense>
+          </BrandingProvider>
           <Toaster />
           <CommandLogsStream />
           <SandboxState />
