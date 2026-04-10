@@ -1,5 +1,6 @@
 import { ToggleWelcome } from '@/components/modals/welcome'
-import { VercelDashed } from '@/components/icons/vercel-dashed'
+import { PlatformLogo } from '@/components/icons/platform-logo'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -8,14 +9,19 @@ interface Props {
 
 export async function Header({ className }: Props) {
   return (
-    <header className={cn('flex items-center justify-between', className)}>
+    <header
+      aria-label="Platform header"
+      className={cn('flex items-center justify-between', className)}
+      role="banner"
+    >
       <div className="flex items-center">
-        <VercelDashed className="ml-1 md:ml-2.5 mr-1.5" />
+        <PlatformLogo className="ml-1 md:ml-2.5 mr-1.5 text-primary" />
         <span className="hidden md:inline text-sm uppercase font-mono font-bold tracking-tight">
-          OSS Vibe Coding Platform
+          Ideas Empowerment Platform
         </span>
       </div>
       <div className="flex items-center ml-auto space-x-1.5">
+        <ThemeToggle />
         <ToggleWelcome />
       </div>
     </header>
