@@ -19,10 +19,12 @@ const ChatContext = createContext<ChatContextValue | undefined>(undefined)
 export function ChatProvider({ children }: { children: ReactNode }) {
   const mapDataToState = useDataStateMapper()
   const mapDataToStateRef = useRef(mapDataToState)
+  // eslint-disable-next-line react-hooks/refs -- keeping ref in sync with latest callback
   mapDataToStateRef.current = mapDataToState
 
   const chat = useMemo(
     () =>
+      // eslint-disable-next-line react-hooks/refs -- ref is accessed inside callback, not during render
       new Chat<ChatUIMessage>({
         onToolCall: () => mutate('/api/auth/info'),
         onData: (data: DataUIPart<DataPart>) => mapDataToStateRef.current(data),

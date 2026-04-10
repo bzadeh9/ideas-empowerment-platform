@@ -7,6 +7,7 @@ export function useLocalStorageValue(key: string) {
   useEffect(() => {
     const storedValue = localStorage.getItem(key)
     if (storedValue !== null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- initializing state from localStorage on mount
       setValue(storedValue)
     }
     setIsInitialized(true)

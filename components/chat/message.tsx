@@ -33,6 +33,7 @@ export const Message = memo(function Message({ message }: Props) {
     if (reasoningParts.length > 0) {
       const latestReasoningIndex =
         reasoningParts[reasoningParts.length - 1].index
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing derived state from props
       setExpandedReasoningIndex(latestReasoningIndex)
     }
   }, [reasoningParts])

@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { Welcome, ToggleWelcome, useWelcomeStore } from '@/components/modals/welcome'
+import {
+  Welcome,
+  ToggleWelcome,
+  useWelcomeStore,
+} from '@/components/modals/welcome'
 
 // Mock next-themes for components that might use it indirectly
 vi.mock('next-themes', () => ({
@@ -57,9 +61,7 @@ describe('Welcome modal', () => {
 
   it('contains expected content about the platform', () => {
     render(<Welcome defaultOpen={true} onDismissAction={() => {}} />)
-    expect(
-      screen.getByText(/end-to-end coding platform/i)
-    ).toBeInTheDocument()
+    expect(screen.getByText(/end-to-end coding platform/i)).toBeInTheDocument()
   })
 })
 

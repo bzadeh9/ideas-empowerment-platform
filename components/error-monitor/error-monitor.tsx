@@ -45,8 +45,8 @@ export function ErrorMonitor({ children, debounceTimeMs = 10000 }: Props) {
     chatStatus !== 'ready' || fixErrors === false
       ? 'disabled'
       : pending || scheduled
-      ? 'pending'
-      : 'ready'
+        ? 'pending'
+        : 'ready'
 
   const getErrorKey = (error: Line) => {
     return `${error.command}-${error.args.join(' ')}-${error.data.slice(

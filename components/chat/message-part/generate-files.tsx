@@ -17,7 +17,7 @@ export function GenerateFiles(props: {
     : props.message.paths
 
   const generating = lastInProgress
-    ? props.message.paths[props.message.paths.length - 1] ?? ''
+    ? (props.message.paths[props.message.paths.length - 1] ?? '')
     : null
 
   return (
