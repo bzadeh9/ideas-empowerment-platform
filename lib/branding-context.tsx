@@ -15,7 +15,7 @@ import {
   loadBranding,
   saveBranding,
 } from '@/lib/branding'
-import { hexToRgb } from '@/lib/contrast'
+import { hexToRgb, relativeLuminance } from '@/lib/contrast'
 
 interface BrandingContextValue {
   branding: BrandingConfig
@@ -26,12 +26,6 @@ interface BrandingContextValue {
 const BrandingContext = createContext<BrandingContextValue | undefined>(
   undefined
 )
-
-/** Convert a hex color to an "r, g, b" CSS-variable–friendly string. */
-function hexToRgbString(hex: string): string {
-  const { r, g, b } = hexToRgb(hex)
-  return `${r}, ${g}, ${b}`
-}
 
 /** Apply branding CSS custom properties to the document root. */
 function applyBrandingToDOM(config: BrandingConfig) {
@@ -46,8 +40,7 @@ function applyBrandingToDOM(config: BrandingConfig) {
   )
 
   // For foreground on primary, pick white or black for best contrast
-  const lum =
-    0.2126 * (pr.r / 255) + 0.7152 * (pr.g / 255) + 0.0722 * (pr.b / 255)
+  const lum = relativeLuminance(config.primaryColor)
   const fg = lum > 0.5 ? 'rgb(15, 23, 42)' : 'rgb(255, 255, 255)'
   root.style.setProperty('--primary-foreground', fg)
 
