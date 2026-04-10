@@ -138,6 +138,54 @@ vc deploy
 
 Contributions are welcome! Whether you're fixing a bug, adding a feature, or improving documentation, feel free to open an issue or submit a pull request.
 
+### Development Setup
+
+```bash
+# Install dependencies
+pnpm install
+
+# Run development server
+pnpm dev
+
+# Run unit tests
+pnpm test
+
+# Run tests with coverage report
+pnpm run test:coverage
+
+# Run Playwright end-to-end tests
+pnpm run test:e2e
+
+# Lint the codebase
+pnpm run lint
+
+# Check formatting
+pnpm run format:check
+
+# Auto-format code
+pnpm run format
+
+# Type-check
+pnpm run type-check
+
+# Create a changeset for your PR
+pnpm run changeset
+```
+
+### Pre-commit Hooks
+
+This project uses [Husky](https://typicode.github.io/husky/) to run checks before each commit:
+
+- **Formatting** (Prettier via lint-staged)
+- **Linting** (ESLint via lint-staged)
+- **Type checking** (`tsc --noEmit`)
+- **Unit tests** (Vitest)
+- **Build verification** (`next build`)
+
+### Changesets
+
+We use [@changesets/changesets](https://github.com/changesets/changesets) to manage releases. When making changes, run `pnpm run changeset` to create a changeset describing your modifications.
+
 ---
 
 ## License

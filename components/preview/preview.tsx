@@ -22,6 +22,7 @@ export function Preview({ className, disabled, url }: Props) {
   const loadStartTime = useRef<number | null>(null)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing local state with prop
     setCurrentUrl(url)
     setInputValue(url || '')
   }, [url])

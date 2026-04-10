@@ -13,11 +13,7 @@ export function PlatformLogo({ className }: Props) {
       width="22"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path
-        d="M12 2L2 7l10 5 10-5-10-5z"
-        fill="currentColor"
-        opacity="0.2"
-      />
+      <path d="M12 2L2 7l10 5 10-5-10-5z" fill="currentColor" opacity="0.2" />
       <path
         d="M2 17l10 5 10-5"
         stroke="currentColor"

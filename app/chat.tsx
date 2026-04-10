@@ -105,7 +105,7 @@ export function Chat({ className }: Props) {
           value={input}
         />
         <Button type="submit" disabled={status !== 'ready' || !input.trim()}>
-        <SendIcon className="w-4 h-4" />
+          <SendIcon className="w-4 h-4" />
         </Button>
       </form>
     </Panel>
