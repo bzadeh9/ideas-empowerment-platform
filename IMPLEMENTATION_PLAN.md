@@ -191,3 +191,39 @@ Create one parent tracking issue and sub-issues grouped by phase:
 For each sub-issue:
 - Include scope, acceptance criteria, dependencies, and test expectations.
 - Link back to this `IMPLEMENTATION_PLAN.md`.
+
+---
+
+## Creating GitHub Issues
+
+A fully automated workflow creates all 20 issues (1 parent + 19 sub-issues) with detailed,
+developer-ready descriptions drawn from both this plan and
+[`APP_ENHANCEMENT_IMPLEMENTATION_PLAN`](APP_ENHANCEMENT_IMPLEMENTATION_PLAN).
+
+### Steps
+
+1. Navigate to **Actions → Create Implementation Plan Issues** in the GitHub repository.
+2. Click **Run workflow** → leave *Dry run* unchecked → click **Run workflow**.
+3. The workflow will:
+   - Create the parent tracking issue.
+   - Create all 19 sub-issues, each with full scope, file list, test requirements, acceptance
+     criteria, and parent reference.
+   - Update the parent issue's body with a checklist of all sub-issues.
+   - Commit an updated `IMPLEMENTATION_PLAN.md` that includes live links to all created issues.
+
+> **Dry run mode**: Check the *Dry run* option to print a summary of all planned issues
+> without creating anything.
+
+### Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `.github/scripts/create-issues.js` | Creates all issues via the GitHub REST API |
+| `.github/scripts/update-plan.js` | Rewrites this file with live issue links |
+| `.github/workflows/create-issues.yml` | `workflow_dispatch` orchestrator |
+
+### Tracking Progress
+
+Once issues are created, the parent issue acts as a Kanban board. Check off each sub-issue
+as its corresponding PR is merged. The checklist in this file (once updated by the workflow)
+serves as a permanent reference with links to all issue pages.
