@@ -58,14 +58,24 @@ describe('DeployDialog', () => {
     expect(screen.getByText('Azure Static Web Apps')).toBeInTheDocument()
   })
 
-  it('has proper ARIA attributes on tabs', () => {
+  it('supports keyboard navigation between tabs', () => {
     render(<DeployDialog />)
     fireEvent.click(screen.getByText('Deploy'))
-    const tablist = screen.getByRole('tablist')
-    expect(tablist).toHaveAttribute('aria-label', 'Deployment options')
-    const tabs = screen.getAllByRole('tab')
-    expect(tabs).toHaveLength(3)
-    expect(tabs[0]).toHaveAttribute('aria-selected', 'true')
-    expect(tabs[1]).toHaveAttribute('aria-selected', 'false')
+
+    const firstTab = screen.getByRole('tab', { name: 'Export ZIP' })
+    fireEvent.keyDown(firstTab, { key: 'ArrowRight' })
+    expect(
+      screen.getByText('Deploy your project to Vercel in three steps:')
+    ).toBeInTheDocument()
+
+    const secondTab = screen.getByRole('tab', { name: 'Deploy to Vercel' })
+    fireEvent.keyDown(secondTab, { key: 'ArrowRight' })
+    expect(screen.getByText('AWS Amplify')).toBeInTheDocument()
+
+    const thirdTab = screen.getByRole('tab', { name: 'Other Providers' })
+    fireEvent.keyDown(thirdTab, { key: 'ArrowLeft' })
+    expect(
+      screen.getByText('Deploy your project to Vercel in three steps:')
+    ).toBeInTheDocument()
   })
 })

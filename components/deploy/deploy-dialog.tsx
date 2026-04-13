@@ -13,7 +13,7 @@ import { RocketIcon } from 'lucide-react'
 import { DeployInstructions } from './deploy-instructions'
 import { DeployVercel } from './deploy-vercel'
 import { ExportZip } from './export-zip'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -30,6 +30,22 @@ const tabs: { id: Tab; label: string }[] = [
 
 export function DeployDialog({ sandboxId }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('zip')
+
+  const handleTabKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      const currentIndex = tabs.findIndex((t) => t.id === activeTab)
+      if (event.key === 'ArrowRight') {
+        event.preventDefault()
+        const next = tabs[(currentIndex + 1) % tabs.length]
+        setActiveTab(next.id)
+      } else if (event.key === 'ArrowLeft') {
+        event.preventDefault()
+        const prev = tabs[(currentIndex - 1 + tabs.length) % tabs.length]
+        setActiveTab(prev.id)
+      }
+    },
+    [activeTab]
+  )
 
   return (
     <Dialog>
@@ -64,6 +80,8 @@ export function DeployDialog({ sandboxId }: Props) {
                   : 'text-muted-foreground hover:text-foreground'
               )}
               onClick={() => setActiveTab(tab.id)}
+              onKeyDown={handleTabKeyDown}
+              tabIndex={activeTab === tab.id ? 0 : -1}
             >
               {tab.label}
             </button>
