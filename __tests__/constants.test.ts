@@ -34,10 +34,32 @@ describe('AI constants', () => {
     }
   })
 
-  it('has at least one test prompt', () => {
-    expect(TEST_PROMPTS.length).toBeGreaterThan(0)
+  it('has at least 8 test prompts', () => {
+    expect(TEST_PROMPTS.length).toBeGreaterThanOrEqual(8)
+  })
+
+  it('each test prompt has required fields', () => {
     for (const prompt of TEST_PROMPTS) {
-      expect(typeof prompt).toBe('string')
+      expect(typeof prompt.id).toBe('string')
+      expect(prompt.id.length).toBeGreaterThan(0)
+      expect(typeof prompt.category).toBe('string')
+      expect(prompt.category.length).toBeGreaterThan(0)
+      expect(typeof prompt.title).toBe('string')
+      expect(prompt.title.length).toBeGreaterThan(0)
+      expect(typeof prompt.prompt).toBe('string')
+      expect(prompt.prompt.length).toBeGreaterThan(0)
+      expect(typeof prompt.description).toBe('string')
+      expect(prompt.description.length).toBeGreaterThan(0)
     }
+  })
+
+  it('covers at least 4 distinct categories', () => {
+    const categories = new Set(TEST_PROMPTS.map((t) => t.category))
+    expect(categories.size).toBeGreaterThanOrEqual(4)
+  })
+
+  it('has unique ids', () => {
+    const ids = TEST_PROMPTS.map((t) => t.id)
+    expect(new Set(ids).size).toBe(ids.length)
   })
 })
