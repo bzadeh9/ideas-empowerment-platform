@@ -22,6 +22,8 @@ export default defineConfig({
         'components/icons/**/*.tsx',
         'components/modals/welcome.tsx',
         'components/ui/button.tsx',
+        'components/idea-wizard/**/*.{ts,tsx}',
+        'components/templates/**/*.{ts,tsx}',
       ],
       exclude: [
         '**/*.d.ts',

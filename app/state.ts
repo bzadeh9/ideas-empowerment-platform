@@ -5,6 +5,23 @@ import { useMonitorState } from '@/components/error-monitor/state'
 import { useMemo } from 'react'
 import { create } from 'zustand'
 
+interface ProjectStoreState {
+  projectId?: string
+  setProjectId: (id: string) => void
+  clearProjectId: () => void
+  savedIndicator: number
+  markSaved: () => void
+}
+
+export const useProjectStore = create<ProjectStoreState>()((set) => ({
+  projectId: undefined,
+  setProjectId: (projectId) => set({ projectId }),
+  clearProjectId: () => set({ projectId: undefined }),
+  savedIndicator: 0,
+  markSaved: () =>
+    set((state) => ({ savedIndicator: state.savedIndicator + 1 })),
+}))
+
 interface SandboxStore {
   addGeneratedFiles: (files: string[]) => void
   addLog: (data: { sandboxId: string; cmdId: string; log: CommandLog }) => void
@@ -125,6 +142,7 @@ export function useDataStateMapper() {
       case 'data-create-sandbox':
         if (data.data.sandboxId) {
           setSandboxId(data.data.sandboxId)
+          triggerAutoSave()
         }
         break
       case 'data-generating-files':
@@ -132,6 +150,7 @@ export function useDataStateMapper() {
           setCursor(errors.length)
           addPaths(data.data.paths)
           addGeneratedFiles(data.data.paths)
+          triggerAutoSave()
         }
         break
       case 'data-run-command':
@@ -146,6 +165,7 @@ export function useDataStateMapper() {
             command: data.data.command,
             args: data.data.args,
           })
+          triggerAutoSave()
         }
         break
       case 'data-get-sandbox-url':
@@ -157,4 +177,34 @@ export function useDataStateMapper() {
         break
     }
   }
+}
+
+/** Debounced auto-save timer reference. */
+let autoSaveTimer: ReturnType<typeof setTimeout> | undefined
+
+/**
+ * Triggers a debounced auto-save for the current project.
+ * Waits 2 seconds after the last call before persisting.
+ */
+export function triggerAutoSave() {
+  const { projectId, markSaved } = useProjectStore.getState()
+  if (!projectId) return
+
+  if (autoSaveTimer) clearTimeout(autoSaveTimer)
+
+  autoSaveTimer = setTimeout(async () => {
+    const state = useSandboxStore.getState()
+    try {
+      const { getProjectStore } = await import('@/lib/storage/project-store')
+      const store = getProjectStore()
+      await store.update(projectId, {
+        fileManifest: [...state.generatedFiles].map((p) => ({ path: p })),
+        sandboxConfig: { sandboxId: state.sandboxId },
+        status: state.sandboxId ? 'in-progress' : 'draft',
+      })
+      markSaved()
+    } catch {
+      // Silently ignore auto-save failures — user can manually save.
+    }
+  }, 2000)
 }
