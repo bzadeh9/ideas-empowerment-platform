@@ -2,6 +2,7 @@
 
 import { BarLoader } from 'react-spinners'
 import { CompassIcon, RefreshCwIcon } from 'lucide-react'
+import { DeployDialog } from '@/components/deploy/deploy-dialog'
 import { Panel, PanelHeader } from '@/components/panels/panels'
 import { ScrollArea } from '@radix-ui/react-scroll-area'
 import { useEffect, useRef, useState } from 'react'
@@ -10,10 +11,11 @@ import { cn } from '@/lib/utils'
 interface Props {
   className?: string
   disabled?: boolean
+  sandboxId?: string
   url?: string
 }
 
-export function Preview({ className, disabled, url }: Props) {
+export function Preview({ className, disabled, sandboxId, url }: Props) {
   const [currentUrl, setCurrentUrl] = useState(url)
   const [error, setError] = useState<string | null>(null)
   const [inputValue, setInputValue] = useState(url || '')
@@ -98,6 +100,10 @@ export function Preview({ className, disabled, url }: Props) {
               value={inputValue}
             />
           )}
+        </div>
+
+        <div className="absolute right-0">
+          <DeployDialog sandboxId={sandboxId} />
         </div>
       </PanelHeader>
 
