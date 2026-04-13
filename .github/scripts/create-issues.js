@@ -530,7 +530,7 @@ The README promises a platform that "benefits the whole organization" and enable
 ## Problem Statement
 - Projects are completely private and non-shareable.
 - There is no feedback mechanism — no way to comment or endorse an idea.
-- Without social signals (votes, comments), good ideas remain invisible to the organisation.
+- Without social signals (votes, comments), good ideas remain invisible to the organization.
 
 ## What to Build
 
@@ -538,7 +538,7 @@ The README promises a platform that "benefits the whole organization" and enable
 - Shared link format: \`/projects/{id}/view\`
 - Three visibility levels stored on the \`Project\` model:
   - \`private\` — creator only (default)
-  - \`team\` — organisation members
+  - \`team\` — organization members
   - \`public\` — anyone with the link
 - \`ShareDialog\` (\`components/projects/share-dialog.tsx\`) lets the owner toggle visibility and copy the link.
 
@@ -620,7 +620,7 @@ The README positions this as a platform for turning ideas into prototypes, but t
 
 ## Problem Statement
 - Ideas have no status — there is no way to signal whether an idea is under development, complete, approved, or archived.
-- There is no admin oversight of submitted ideas across the organisation.
+- There is no admin oversight of submitted ideas across the organization.
 - No analytics means no way to measure the platform's innovation output.
 
 ## What to Build

@@ -224,6 +224,6 @@ developer-ready descriptions drawn from both this plan and
 
 ### Tracking Progress
 
-Once issues are created, the parent issue acts as a Kanban board. Check off each sub-issue
+Once issues are created, the parent issue acts as a checklist tracker. Check off each sub-issue
 as its corresponding PR is merged. The checklist in this file (once updated by the workflow)
 serves as a permanent reference with links to all issue pages.
