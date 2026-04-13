@@ -24,6 +24,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { IdeaWizard } from '@/components/idea-wizard/idea-wizard'
 import { Message } from '@/components/chat/message'
 import { ModelSelector } from '@/components/settings/model-selector'
@@ -217,8 +218,8 @@ export function Chat({ className }: Props) {
               Adjust your idea description and re-run the prompt composer.
             </DialogDescription>
           </DialogHeader>
-          <textarea
-            className="flex min-h-[100px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none"
+          <Textarea
+            className="min-h-[100px]"
             placeholder="Describe your idea..."
             value={refineText}
             onChange={(e) => setRefineText(e.target.value)}
@@ -236,7 +237,7 @@ export function Chat({ className }: Props) {
               onClick={handleRefine}
               disabled={!refineText.trim()}
             >
-              Refine &amp; Generate
+              Refine & Generate
             </Button>
           </DialogFooter>
         </DialogContent>

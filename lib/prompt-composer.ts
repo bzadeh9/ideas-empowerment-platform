@@ -33,7 +33,7 @@ export function composePrompt(input: WizardInput): string {
 
   if (input.problemStatement) {
     parts.push(
-      `It should solve the following problem: ${input.problemStatement}`
+      `It should solve the following problem: ${input.problemStatement}.`
     )
   }
 
