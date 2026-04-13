@@ -1,0 +1,104 @@
+name: Create Implementation Plan Issues
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run — print issue bodies without creating them'
+        required: false
+        default: 'false'
+        type: boolean
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  create-issues:
+    name: Create all implementation plan issues
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verify issues permission
+        run: |
+          echo "Repository: $GITHUB_REPOSITORY"
+          echo "Actor: $GITHUB_ACTOR"
+          echo "Dry run: ${{ inputs.dry_run }}"
+
+      - name: Create implementation plan issues
+        if: ${{ inputs.dry_run != 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          UPDATE_PLAN: 'true'
+        run: node .github/scripts/create-issues.js
+
+      - name: Dry run — list planned issues
+        if: ${{ inputs.dry_run == 'true' }}
+        run: |
+          echo "=== DRY RUN MODE ==="
+          echo "The following 20 issues would be created:"
+          echo ""
+          echo "Parent: Implementation Plan Execution: Ideas Empowerment Platform"
+          echo ""
+          echo "Phase 1 (HIGH PRIORITY):"
+          echo "  1. Phase 1: Project Persistence & History"
+          echo "  2. Phase 1: Structured Idea Input & Templates"
+          echo "  3. Phase 1: Deployment Flow"
+          echo ""
+          echo "Phase 2 (HIGH PRIORITY):"
+          echo "  4. Phase 2: Authentication & Accounts"
+          echo "  5. Phase 2: Sharing, Comments & Voting"
+          echo "  6. Phase 2: Pipeline & Status Tracking"
+          echo ""
+          echo "Phase 3 (MEDIUM PRIORITY):"
+          echo "  7. Phase 3: Multi-Framework Generation"
+          echo "  8. Phase 3: Versioning & Iterative Refinement"
+          echo "  9. Phase 3: Error Handling UX"
+          echo ""
+          echo "Phase 4 (MEDIUM PRIORITY):"
+          echo "  10. Phase 4: Organization & Team Management"
+          echo "  11. Phase 4: Innovation Challenges"
+          echo "  12. Phase 4: Audit Trail & Compliance"
+          echo ""
+          echo "Phase 5 (MEDIUM-LOW PRIORITY):"
+          echo "  13. Phase 5: Mobile UX Improvements"
+          echo "  14. Phase 5: Accessibility Enhancements"
+          echo "  15. Phase 5: Test Coverage Expansion"
+          echo ""
+          echo "Phase 6 (LOW PRIORITY):"
+          echo "  16. Phase 6: Real-Time Collaboration"
+          echo "  17. Phase 6: Custom AI Model Integration"
+          echo "  18. Phase 6: Marketplace & Plugin Ecosystem"
+          echo "  19. Phase 6: Advanced Analytics & AI Insights"
+
+      - name: Upload created-issues manifest
+        if: ${{ inputs.dry_run != 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: created-issues
+          path: /tmp/created-issues.json
+          retention-days: 30
+
+      - name: Update IMPLEMENTATION_PLAN.md with issue links
+        if: ${{ inputs.dry_run != 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node .github/scripts/update-plan.js
+
+      - name: Commit updated plan
+        if: ${{ inputs.dry_run != 'true' }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add IMPLEMENTATION_PLAN.md
+          git diff --cached --quiet || git commit -m "docs: update IMPLEMENTATION_PLAN.md with GitHub issue links [skip ci]"
+          git push
