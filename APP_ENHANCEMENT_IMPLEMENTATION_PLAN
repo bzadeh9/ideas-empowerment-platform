@@ -1,0 +1,456 @@
+#Ideas Empowerment Platform — Detailed Implementation Plan
+##Executive Summary
+This plan is based on a deep analysis of the current codebase (35+ source files, 19 unit tests, 1 E2E test, 6 CI jobs), the README's stated vision, and extensive market research across AI code generation platforms (Bolt.new, v0.dev, Lovable.dev, Cloudflare VibeSDK) and enterprise innovation management platforms (Brightidea, IdeaScale, HYPE Innovation).
+
+The platform occupies a unique intersection: it's an AI vibe-coding platform (prompt → full-stack app) purpose-built for enterprise innovation empowerment (turning employee ideas into tangible PoCs). The plan below bridges these two worlds — strengthening the core coding engine while adding the collaboration, governance, and lifecycle features that enterprises need.
+
+Gap Analysis: README Vision vs. Current State
+README Promise	Current State	Gap
+"Empowers individuals and businesses to turn ideas into PoC/Prototype"	✅ Core AI generation works	❌ No idea lifecycle management, no project persistence
+"Users enter text prompts"	✅ Chat-based prompt interface works	⚠️ Only free-form text, no structured idea templates
+"AI agent generates full-stack applications"	✅ Sandbox + tools work (create, generate files, run commands)	⚠️ Limited to Next.js default, no backend template options
+"Sandboxed environment with live preview"	✅ Vercel Sandbox + iframe preview	✅ Working well
+"File explorer and command logs"	✅ Both implemented	✅ Working well
+"One-click deploy"	⚠️ Deploy button in README only	❌ No in-app deploy flow for generated apps
+"Multi-model AI support"	✅ 4 models via AI Gateway	⚠️ No custom model config
+"Branding & Customization"	✅ Branding panel with colors/fonts	✅ Working with WCAG contrast checks
+"For Businesses — fosters culture of innovation"	❌ No user accounts, no collaboration	❌ Major gap — no enterprise features
+"For Individuals — lowers barrier from idea to demo"	⚠️ Works for one session	❌ Can't save/revisit/share ideas
+Feature Implementation Plan
+PHASE 1: Foundation & Core Platform Improvements
+Priority: HIGH — Fixes critical gaps that prevent real-world usage
+
+Feature 1.1: Project Persistence & History
+Problem: Currently, all work is lost when a session ends. Sandboxes are ephemeral and there's no save/load functionality. The README promises "ideas into working PoC" but there's no way to revisit or iterate on ideas.
+
+What to Build:
+
+A Project data model that captures: project ID, title, description (the original idea), chat history (messages), generated file manifest, sandbox configuration, creation/update timestamps, and status (draft/in-progress/complete)
+A project storage layer — initially using browser IndexedDB (via idb or Dexie) for zero-backend deployment, with an interface/adapter pattern so a server-side database (e.g., Supabase, Vercel KV) can be swapped in later
+A "Save Project" action in the chat/header UI that serializes the current session state (from the Zustand store + chat context) into a persistent project record
+A "My Projects" dashboard page accessible from the header, showing a card grid of saved projects with title, description excerpt, last modified date, status badge, and quick actions (open, duplicate, delete)
+An "Open Project" flow that restores chat history, file tree, and attempts to reconnect to the sandbox (or prompts to recreate it)
+Auto-save on meaningful milestones (sandbox created, files generated, command run successfully)
+Files to Create/Modify:
+
+lib/storage/project-store.ts — Project data model & IndexedDB adapter
+lib/storage/types.ts — TypeScript interfaces for Project, ProjectSummary
+app/projects/page.tsx — Projects dashboard page
+components/projects/project-card.tsx — Card component for project list
+components/projects/save-project-dialog.tsx — Save/name dialog
+Modify app/header.tsx — Add "My Projects" navigation link
+Modify app/state.ts — Add project ID to sandbox store, auto-save hooks
+Modify lib/chat-context.tsx — Add serialization/deserialization of chat state
+Testing:
+
+Unit tests for project storage adapter (CRUD operations)
+Unit tests for serialization/deserialization of chat state
+E2E test: create project → navigate away → return → project persists
+Feature 1.2: Enhanced Idea Input & Structured Prompts
+Problem: The current interface only supports free-form text. The README envisions "describing an idea in plain language" but doesn't guide users who might not know what to say. Market research shows the best platforms (Lovable, IdeaScale) provide structured input to get better results.
+
+What to Build:
+
+An "Idea Wizard" — a guided multi-step form (replaces or augments the welcome modal) that collects: idea title, problem statement, target audience, key features desired, tech preferences (frontend only / full-stack / API), and visual style preference
+A prompt composer that converts wizard inputs into an optimized AI prompt, using a template system
+An "Idea Templates" gallery showing pre-built idea categories (Internal Dashboard, Customer Portal, Data Visualization, Workflow Automation, Landing Page, API Service) with curated starting prompts
+Expand TEST_PROMPTS in ai/constants.ts from 2 to 8+ diverse templates categorized by type
+A "Refine Idea" button in chat that lets users iteratively improve their prompt before or after generation
+Files to Create/Modify:
+
+components/idea-wizard/idea-wizard.tsx — Multi-step form component
+components/idea-wizard/step-problem.tsx — Problem statement step
+components/idea-wizard/step-audience.tsx — Audience & scope step
+components/idea-wizard/step-tech.tsx — Technology preferences step
+components/idea-wizard/step-style.tsx — Visual style preferences step
+lib/prompt-composer.ts — Converts structured input into AI prompt
+components/templates/template-gallery.tsx — Template selection grid
+components/templates/template-card.tsx — Individual template card
+Modify ai/constants.ts — Expand and categorize test prompts
+Modify app/chat.tsx — Integrate wizard and template gallery triggers
+Testing:
+
+Unit tests for prompt composer (various input combinations)
+Component tests for wizard step navigation
+Snapshot tests for template cards
+Feature 1.3: In-App Deployment Flow
+Problem: The README lists deployment to Vercel, AWS, Google Cloud, and Azure, but the actual platform has no deploy integration. Generated apps live only in the ephemeral sandbox.
+
+What to Build:
+
+A "Deploy" button in the preview panel header that opens a deployment dialog
+Export as ZIP — download all generated files as a zip archive (works client-side using JSZip or the sandbox files API)
+Deploy to Vercel — a guided flow that: (1) exports files to a GitHub repo via GitHub API, (2) triggers a Vercel deployment via Vercel API, or simplifies to a "Push to GitHub" + manual Vercel link
+Copy deploy instructions — for AWS/GCP/Azure, generate copy-pasteable CLI commands customized to the project's tech stack
+A deployment status indicator showing if a project has been deployed and where
+Files to Create/Modify:
+
+components/deploy/deploy-dialog.tsx — Main deployment modal
+components/deploy/export-zip.tsx — ZIP download component
+components/deploy/deploy-vercel.tsx — Vercel deployment flow
+components/deploy/deploy-instructions.tsx — CLI instructions for other providers
+app/api/deploy/route.ts — Server route for packaging files from sandbox
+ai/tools/export-files.ts — New AI tool to package sandbox files for export
+Modify components/preview/preview.tsx — Add deploy button to header
+Testing:
+
+Unit tests for file packaging logic
+E2E test: generate app → click deploy → download ZIP → verify contents
+PHASE 2: Enterprise & Collaboration Features
+Priority: HIGH — Fulfills the "For Businesses" promise in the README
+
+Feature 2.1: User Authentication & Accounts
+Problem: The platform has zero authentication. The README targets businesses but there's no concept of users, teams, or permissions. The codebase already includes arctic (OAuth) and jose (JWT) as dependencies but they're unused.
+
+What to Build:
+
+OAuth login using the already-installed arctic library — support GitHub OAuth and Google OAuth as initial providers (enterprise SSO can be added later)
+JWT session management using the already-installed jose library — issue signed tokens on login, validate on API routes
+A User model with: ID, email, display name, avatar URL, provider, created at, role (user/admin)
+Login/signup page at /login with OAuth provider buttons
+Protected routes — wrap API routes (/api/chat, /api/sandboxes/*) with auth middleware
+User menu in the header replacing the anonymous state — avatar, name, logout
+A lightweight user storage layer (initially using Vercel KV, Upstash Redis, or a simple JSON-based approach) — the adapter pattern from Feature 1.1 should be reused
+Files to Create/Modify:
+
+app/login/page.tsx — Login page
+app/api/auth/[provider]/route.ts — OAuth callback routes (GitHub, Google)
+app/api/auth/session/route.ts — Session info endpoint
+lib/auth/session.ts — JWT creation, validation, middleware
+lib/auth/providers.ts — Arctic OAuth provider config
+lib/auth/types.ts — User type definitions
+components/auth/user-menu.tsx — Header user avatar/menu
+components/auth/login-button.tsx — OAuth login buttons
+Modify app/header.tsx — Add user menu
+Modify app/api/chat/route.ts — Add auth check
+Add environment variables to .env.example: GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, JWT_SECRET
+Testing:
+
+Unit tests for JWT creation/validation
+Unit tests for auth middleware
+E2E test: OAuth flow (mocked) → access protected route
+Feature 2.2: Idea Sharing & Collaboration
+Problem: The README says the platform "benefits the whole organization" and enables "staff at every level to contribute ideas," but there's no way to share ideas or collaborate. Market research shows collaboration is the #1 differentiator for enterprise platforms.
+
+What to Build:
+
+Share Project — generate a shareable link (e.g., /projects/[id]/view) that lets anyone (or authenticated users) view a project's idea, chat history, generated app preview, and file tree in read-only mode
+Project visibility settings — private (only creator), team (org members), or public (anyone with link)
+Comments & feedback on shared projects — a simple comment thread at the bottom of a shared project view, with @mentions
+Upvoting/endorsement — logged-in users can upvote shared projects to signal interest or support
+Activity feed — a simple feed on the projects dashboard showing recent activity across shared projects (new ideas, comments, deployments)
+Files to Create/Modify:
+
+app/projects/[id]/view/page.tsx — Shared project view (read-only)
+components/projects/share-dialog.tsx — Share settings modal
+components/projects/comment-thread.tsx — Comment UI
+components/projects/upvote-button.tsx — Upvote component
+components/projects/activity-feed.tsx — Activity stream
+lib/storage/comments-store.ts — Comment data model & storage
+app/api/projects/[id]/comments/route.ts — Comments API
+app/api/projects/[id]/vote/route.ts — Vote API
+Testing:
+
+Unit tests for comment/vote storage
+Component tests for share dialog
+E2E test: create project → share → view as another user → comment → upvote
+Feature 2.3: Idea Pipeline & Status Tracking
+Problem: The README positions this as a platform for turning ideas into prototypes, but there's no concept of an idea lifecycle. Enterprise innovation platforms (Brightidea, IdeaScale) all have structured pipelines.
+
+What to Build:
+
+A pipeline/status model for projects with stages: Idea → In Development → Prototype Ready → Under Review → Approved → Deployed / Archived
+A Kanban board view on the projects dashboard showing projects organized by pipeline stage, with drag-and-drop to change status
+Status transitions with optional notes/justification
+Admin view — users with admin role can see all projects across the organization, filter by status/author/date, and bulk-manage
+Dashboard analytics — simple charts showing: ideas submitted over time, ideas by status, conversion rate (idea → deployed), top contributors
+Files to Create/Modify:
+
+app/projects/board/page.tsx — Kanban board view
+app/projects/analytics/page.tsx — Dashboard analytics
+components/projects/kanban-board.tsx — Kanban board component
+components/projects/kanban-column.tsx — Individual column
+components/projects/status-badge.tsx — Pipeline status indicator
+components/projects/analytics-charts.tsx — Simple chart components (can use a lightweight library like recharts or CSS-only bars)
+lib/storage/pipeline.ts — Pipeline stage definitions and transition rules
+Modify lib/storage/types.ts — Add status field to Project model
+Testing:
+
+Unit tests for pipeline stage transitions and validation rules
+Component tests for kanban board interactions
+E2E test: create project → move through pipeline stages → verify analytics
+PHASE 3: Enhanced AI & Generation Experience
+Priority: MEDIUM — Improves the core value proposition
+
+Feature 3.1: Multi-Framework Template Support
+Problem: The AI system prompt currently defaults everything to Next.js. The README says "full-stack applications" but the prompt only guides toward Next.js with specific version constraints. Competitors (Bolt.new) support React, Vue, Svelte, Express, Python Flask, etc.
+
+What to Build:
+
+A framework selector in the chat/settings area letting users choose their target stack: Next.js (default), React + Vite, Vue 3, Svelte/SvelteKit, Express.js API, Python Flask, Python FastAPI, Static HTML/CSS/JS
+Framework-specific system prompts — extend app/api/chat/prompt.md into a template system where each framework has its own set of instructions, conventions, and constraints
+Framework-specific starter files — when creating a sandbox, pre-populate it with the chosen framework's boilerplate
+Update the sandbox creation tool to install framework-appropriate dependencies
+Files to Create/Modify:
+
+ai/prompts/ directory — Framework-specific prompt templates (one .md per framework)
+ai/frameworks.ts — Framework definitions, defaults, and dependencies
+components/settings/framework-selector.tsx — UI for framework selection
+Modify ai/tools/create-sandbox.ts — Accept framework parameter and pre-configure
+Modify ai/tools/generate-files.ts — Use framework-aware file generation
+Modify app/api/chat/route.ts — Load framework-specific prompt
+Testing:
+
+Unit tests for framework definitions and prompt template loading
+Integration test: select Vue → generate project → verify Vue-specific files created
+Feature 3.2: Iterative Refinement & Version Control
+Problem: Once the AI generates files, there's no structured way to iterate. The error monitor auto-fixes runtime errors, but users can't say "change the color scheme" or "add a login page" and see incremental changes without risking breaking the whole project.
+
+What to Build:
+
+Version snapshots — before each major change (file generation, command execution), save a snapshot of the project state (file manifest + chat position)
+Undo/redo — allow users to revert to a previous snapshot if a change breaks things
+A "Version History" panel in the file explorer showing a timeline of snapshots with labels (auto-generated or user-named)
+Diff view — when selecting a snapshot, show a diff of what changed (files added/modified/deleted) compared to the current state
+Branching — allow users to "fork" from any snapshot to explore alternatives without losing the original
+Files to Create/Modify:
+
+lib/storage/snapshots.ts — Snapshot data model and storage
+components/file-explorer/version-history.tsx — Version history panel
+components/file-explorer/diff-view.tsx — File diff viewer
+components/file-explorer/snapshot-controls.tsx — Undo/redo/fork buttons
+Modify app/state.ts — Add snapshot tracking to sandbox store
+Modify ai/tools/generate-files.ts — Trigger snapshot before generation
+Modify ai/tools/run-command.ts — Trigger snapshot before destructive commands
+Testing:
+
+Unit tests for snapshot creation, retrieval, and diff computation
+Component tests for version history UI
+E2E test: generate files → make change → undo → verify original state
+Feature 3.3: Enhanced Error Handling & Debugging
+Problem: The error monitor catches stderr output and reports to AI for auto-fixing, but the experience is basic. Users have limited visibility into what went wrong and no way to manually intervene in the fix process.
+
+What to Build:
+
+A dedicated Error Panel (replacing the current inline error monitor) that shows categorized errors: build errors, runtime errors, dependency errors, each with severity levels
+One-click "Fix This" button per error — sends the specific error to the AI with focused context (the relevant file + error message), rather than the current bulk error reporting
+Error explanation — before fixing, show a human-readable explanation of what went wrong and what the AI plans to do
+Fix preview — show the proposed fix as a diff before applying it, with "Apply" and "Skip" buttons
+Configurable auto-fix aggressiveness — replace the current simple toggle with levels: "Off", "Suggest Only" (show but don't apply), "Auto-Fix" (current behavior)
+Error history — track which errors occurred and how they were resolved
+Files to Create/Modify:
+
+components/error-monitor/error-panel.tsx — Dedicated error panel view
+components/error-monitor/error-card.tsx — Individual error with actions
+components/error-monitor/fix-preview.tsx — Diff preview before applying fix
+components/error-monitor/error-history.tsx — Historical error log
+Modify components/error-monitor/error-monitor.tsx — Refactor to use new components
+Modify components/error-monitor/schemas.ts — Add severity, category fields
+Modify components/settings/auto-fix-errors.tsx — Expand to 3-level selector
+Modify app/api/errors/route.ts — Return structured error analysis with proposed fixes
+Testing:
+
+Unit tests for error categorization logic
+Component tests for error card actions
+E2E test: trigger build error → see in error panel → click fix → verify resolution
+PHASE 4: Enterprise Administration & Governance
+Priority: MEDIUM — Required for enterprise adoption
+
+Feature 4.1: Organization & Team Management
+What to Build:
+
+Organization model — a grouping of users with shared settings, branding, and projects
+Team roles — Owner, Admin, Member, Viewer with different permission levels
+Invite flow — invite users by email or shareable invite link
+Organization settings page — manage members, roles, default branding, allowed AI models
+Usage quotas — track and limit AI API calls, sandbox minutes, and storage per user/org
+Files to Create/Modify:
+
+app/admin/page.tsx — Admin dashboard
+app/admin/members/page.tsx — Member management
+app/admin/settings/page.tsx — Org settings
+components/admin/member-table.tsx — Member list with role management
+components/admin/invite-dialog.tsx — Invite flow
+components/admin/usage-dashboard.tsx — Usage metrics
+lib/auth/permissions.ts — Role-based permission checks
+lib/storage/organization-store.ts — Org data model
+Feature 4.2: Innovation Challenges & Campaigns
+What to Build:
+
+Challenges — time-bound innovation campaigns with a theme, description, deadline, and prize/recognition
+A Challenge page where admins create and publish challenges, and users browse active challenges
+Challenge submissions — users submit projects as responses to specific challenges
+Leaderboard — rank submissions by upvotes, completion stage, or admin scoring
+Challenge results — archive completed challenges with winning ideas highlighted
+Gamification — award badges/points for: first idea submitted, idea deployed, most-upvoted idea, challenge winner
+Files to Create/Modify:
+
+app/challenges/page.tsx — Browse active challenges
+app/challenges/[id]/page.tsx — Individual challenge detail
+app/challenges/create/page.tsx — Admin challenge creation
+components/challenges/challenge-card.tsx — Challenge card
+components/challenges/leaderboard.tsx — Ranked submissions
+components/challenges/badge-display.tsx — User badges
+lib/storage/challenges-store.ts — Challenge data model
+lib/gamification.ts — Points/badge logic
+Feature 4.3: Audit Trail & Compliance
+What to Build:
+
+Activity logging — record all significant actions: project creation, AI interactions (model used, prompt sent, tokens consumed), file generations, deployments, status changes
+Audit log viewer — admin-accessible page showing a filterable, searchable log of all activities
+Data export — export audit logs as CSV for compliance reporting
+Data retention policies — configurable auto-deletion of old projects/logs
+API usage dashboard — track AI API costs per user/team with model-level breakdown
+Files to Create/Modify:
+
+app/admin/audit/page.tsx — Audit log viewer
+components/admin/audit-log.tsx — Log table with filters
+components/admin/api-usage.tsx — API cost tracking
+lib/storage/audit-store.ts — Audit event model & storage
+lib/audit.ts — Audit event creation helpers
+Modify all API routes — Add audit logging calls
+PHASE 5: UX & Quality Improvements
+Priority: MEDIUM-LOW — Polish and robustness
+
+Feature 5.1: Mobile Experience Enhancement
+Problem: The app uses a tab-based layout on mobile, but the current implementation lacks touch-optimized interactions and mobile-specific affordances.
+
+What to Build:
+
+Bottom navigation bar on mobile for quick switching between Chat, Preview, Files, and Logs
+Swipe gestures for navigating between panels
+Touch-optimized file explorer with larger tap targets and long-press context menus
+Responsive chat input that floats properly on mobile keyboards
+PWA support — add a web app manifest and service worker for installability and offline splash screen
+Files to Create/Modify:
+
+components/layout/mobile-nav.tsx — Bottom navigation
+app/manifest.json — PWA manifest
+Modify app/layout.tsx — Add manifest link, viewport meta
+Modify components/file-explorer/file-explorer.tsx — Touch optimizations
+Modify app/page.tsx — Enhanced mobile layout
+Feature 5.2: Accessibility Improvements
+Problem: WCAG contrast checking exists for branding, but broader accessibility gaps remain: no screen reader annotations beyond basics, no font size controls, no reduced motion support.
+
+What to Build:
+
+Skip navigation links at the top of the page
+ARIA live regions for dynamic content (chat messages, command output, error notifications)
+Focus management during panel transitions and modal dialogs
+Keyboard shortcuts with a discoverable shortcuts panel (Ctrl+Enter to send, Ctrl+S to save, etc.)
+Reduced motion — respect prefers-reduced-motion for all animations
+Font size control — add a text size slider in settings
+Screen reader announcements for tool status changes (sandbox created, files generated, etc.)
+Files to Create/Modify:
+
+components/accessibility/skip-nav.tsx — Skip navigation
+components/accessibility/keyboard-shortcuts.tsx — Shortcuts panel
+lib/accessibility.ts — A11y utility helpers
+Modify app/layout.tsx — Add skip nav, reduced motion CSS
+Modify components/chat/message-part/*.tsx — Add ARIA annotations
+Modify components/settings/settings.tsx — Add font size control
+Feature 5.3: Testing Coverage Expansion
+Problem: The codebase has 90% coverage thresholds but only covers utilities and simple components. API routes, AI tools, state management, and streaming have zero test coverage. The E2E suite has only 1 smoke test.
+
+What to Build:
+
+API route tests for /api/chat, /api/errors, /api/models, /api/sandboxes/* using mocked dependencies
+AI tool tests for createSandbox, generateFiles, runCommand, getSandboxURL with mocked Vercel Sandbox
+State management tests for Zustand stores (sandbox store, file explorer store, monitor state)
+Integration tests for chat flow: send message → receive streaming response → verify state updates
+E2E test expansion: full workflow test (load page → enter prompt → wait for generation → view files → check preview), error recovery test, settings persistence test
+Visual regression tests using Playwright screenshots for key UI states
+Files to Create/Modify:
+
+__tests__/api/chat.test.ts — Chat API route tests
+__tests__/api/errors.test.ts — Error analysis route tests
+__tests__/api/sandboxes.test.ts — Sandbox route tests
+__tests__/tools/create-sandbox.test.ts — Sandbox creation tool tests
+__tests__/tools/generate-files.test.ts — File generation tool tests
+__tests__/tools/run-command.test.ts — Command execution tool tests
+__tests__/state.test.ts — Zustand store tests
+e2e/full-workflow.spec.ts — End-to-end generation workflow
+e2e/settings.spec.ts — Settings persistence tests
+e2e/error-recovery.spec.ts — Error handling tests
+PHASE 6: Advanced Features (Future)
+Priority: LOW — Competitive differentiators for later
+
+Feature 6.1: Real-Time Collaboration
+Multi-user editing — multiple users can view/interact with the same project simultaneously
+Cursor presence — see other users' cursors and selections in the chat
+Collaborative sandbox — shared sandbox with synchronized file explorer and preview
+Technology: WebSocket or Vercel's real-time infrastructure
+Feature 6.2: Custom AI Model Integration
+Allow organizations to bring their own AI models (self-hosted LLMs, Azure OpenAI, AWS Bedrock)
+Custom system prompt management per organization
+Fine-tuned models trained on organization's codebase/standards
+Feature 6.3: Marketplace & Plugin System
+A plugin marketplace for community-contributed templates, themes, and integrations
+Custom tools — allow organizations to define their own AI tools (connect to internal APIs, databases)
+Webhook integrations — trigger external actions on project events (Slack notification on idea submission, Jira ticket on approval)
+Feature 6.4: Advanced Analytics & AI Insights
+Innovation metrics dashboard — time-to-prototype, idea conversion rates, most productive models, cost-per-idea
+AI-powered idea clustering — automatically group similar ideas and detect duplicates
+Trend analysis — surface emerging themes from submitted ideas
+Predictive scoring — AI estimates an idea's feasibility and potential impact
+Implementation Priority Summary
+Phase	Features	Priority	Estimated Complexity
+Phase 1	Project Persistence, Idea Input, Deploy Flow	🔴 HIGH	Medium
+Phase 2	Auth, Sharing/Collab, Pipeline Tracking	🔴 HIGH	High
+Phase 3	Multi-Framework, Versioning, Error Handling	🟡 MEDIUM	Medium-High
+Phase 4	Org Management, Challenges, Audit Trail	🟡 MEDIUM	High
+Phase 5	Mobile UX, Accessibility, Testing	🟡 MEDIUM-LOW	Medium
+Phase 6	Real-Time Collab, Custom Models, Marketplace, Analytics	🟢 LOW	Very High
+Technical Architecture Notes for Developers
+Storage Strategy
+The platform currently has no database. The phased approach should be:
+
+Phase 1-2: Use browser storage (IndexedDB via Dexie.js) + Vercel KV for server-side data. This keeps the "Deploy with Vercel" button working with minimal infra.
+Phase 3+: Migrate to a proper database (Supabase recommended — aligns with market trends, provides auth + realtime + storage in one). Abstract all storage behind an adapter interface from Phase 1 to make this migration seamless.
+Auth Architecture
+The codebase already has arctic@3.7.0 (OAuth library) and jose@6.0.12 (JWT library) installed as dependencies. These should be used for Phase 2 auth rather than adding new libraries. Arctic supports 50+ OAuth providers out-of-the-box.
+
+State Management
+The current Zustand + nuqs (URL state) + localStorage pattern works well. New features should follow the same pattern:
+
+Ephemeral UI state → Zustand stores
+User preferences → nuqs (URL params) for shareability
+Persistent config → localStorage (branding pattern)
+Server-side data → SWR with API routes
+AI Prompt Architecture
+The current single prompt.md file works for Next.js-only generation. For multi-framework support, refactor into:
+
+Code
+ai/prompts/
+  base.md           — Common rules (loop prevention, error handling)
+  nextjs.md         — Next.js-specific instructions
+  react-vite.md     — React + Vite instructions
+  vue.md            — Vue 3 instructions
+  express.md        — Express.js API instructions
+  python.md         — Python (Flask/FastAPI) instructions
+Compose the final prompt by concatenating base.md + framework-specific file.
+
+Component Architecture
+All new components should follow the existing patterns:
+
+shadcn/ui base components in components/ui/
+Feature components in components/{feature}/
+Server components for data fetching, client components for interactivity
+Zod schemas for all data validation
+CVA (class-variance-authority) for component variants
+Clarifying Questions
+Before beginning implementation, the following decisions would benefit from stakeholder input:
+
+Database choice: Should we start with client-side IndexedDB (zero infra, works with the Vercel deploy button) or go straight to Supabase/Vercel Postgres (requires additional setup)?
+
+Auth providers: The plan includes GitHub and Google OAuth. Should we also support Microsoft/Azure AD for enterprise environments? What about email/password?
+
+Multi-tenancy: Should organizations be strictly isolated (separate data stores) or is a shared database with row-level security sufficient?
+
+Deployment targets: The README lists Vercel/AWS/GCP/Azure. Which deploy integration should be built first? Vercel is the most natural fit given the tech stack.
+
+Offline support: Should the platform work offline (PWA with service workers) or is it acceptable to require an internet connection (given AI model calls need connectivity)?
+
+Pricing/quotas: If this will be a commercial product, what usage limits should be enforced? This affects how usage tracking is designed.
+
+Data residency: For enterprise customers, do we need to support data residency requirements (EU, US-only, etc.)? This affects the database and storage architecture.
